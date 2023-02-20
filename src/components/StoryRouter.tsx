@@ -10,17 +10,19 @@ import {FCC} from "../fixes";
 import {DeepRouteMatchesContext} from "../contexts/DeepRouteMatches";
 import {UNSAFE_RouteContext} from "react-router";
 import { InitialEntry } from "@remix-run/router/history";
+import { Router } from "@remix-run/router"
 
 export type StoryRouterProps = {
   browserPath?: string;
   routePath?: string;
   routeParams?: Record<string, string>;
   searchParams?: ConstructorParameters<typeof URLSearchParams>[0];
+  router: (a: any) => Router;
   routeState?: unknown;
   outlet?: React.ReactNode;
 };
 
-export const StoryRouter: FCC<StoryRouterProps> = ({ children, browserPath: userBrowserPath, routePath, routeParams, searchParams, routeState, outlet }) => {
+export const StoryRouter: FCC<StoryRouterProps> = ({ children, browserPath: userBrowserPath, routePath, routeParams, router, searchParams, routeState, outlet }) => {
   const generatedPath = generatePath(routePath, routeParams);
   const queryString = new URLSearchParams(searchParams).toString();
   const search = queryString.length > 0 ? `?${queryString}` : '';
@@ -49,23 +51,29 @@ export const StoryRouter: FCC<StoryRouterProps> = ({ children, browserPath: user
   const initialEntry: InitialEntry = { search, state: routeState };
   if (userBrowserPath !== undefined) initialEntry['pathname'] = userBrowserPath;
   if (userBrowserPath === undefined && generatedPath !== '') initialEntry['pathname'] = generatedPath;
-  const routes = [{
-    path: routePath,
-    element: (
-      <RouterLogger>
-        { children }
-      </RouterLogger>
-    ),
-  }];
-  if (outlet) {
-    routes.push({
-      path: '',
-      element: <>{outlet}</>
+
+  let dataRouter
+  if(router) {
+    dataRouter = router(<RouterLogger>{children}</RouterLogger>)
+  } else {
+    const routes = [{
+      path: routePath,
+      element: (
+        <RouterLogger>
+          { children }
+        </RouterLogger>
+      ),
+    }];
+    if (outlet) {
+      routes.push({
+        path: '',
+        element: <>{outlet}</>
+      });
+    }
+    dataRouter = createMemoryRouter(routes, {
+      initialEntries: [initialEntry]
     });
   }
-  const dataRouter = createMemoryRouter(routes, {
-    initialEntries: [initialEntry]
-  });
 
   return (
     <DeepRouteMatchesContext.Provider value={deepRouteMatches}>

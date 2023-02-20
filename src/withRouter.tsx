@@ -9,6 +9,7 @@ export const withRouter = makeDecorator({
   wrapper: (story: (...args: any[]) => React.ReactNode, context, {parameters = {}} ) => {
     const {
       routePath = '*',
+      router,
       routeParams,
       routeState,
       searchParams,
@@ -23,6 +24,7 @@ export const withRouter = makeDecorator({
     return (
       <StoryRouter
         browserPath={browserPath}
+        router={router}
         routePath={routePath}
         routeParams={routeParams}
         searchParams={searchParams}
